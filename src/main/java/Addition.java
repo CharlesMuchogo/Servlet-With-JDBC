@@ -1,3 +1,5 @@
+import com.charlesmuchogo.java_servlet.email;
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -23,28 +25,41 @@ public class Addition extends HttpServlet {
         String email = req.getParameter("emailAddress");
         String phoneNumber = req.getParameter("mobileNumber");
         String password = req.getParameter("password");
-        RequestDispatcher dispatcher = null;
+        String username = req.getParameter("username");
+
         String status = null;
 
-        final String databaseUrl = "jdbc:mysql://localhost:3306/users";
-        final String dbusername = "root";
-        final  String dbpassword = "";
+
+
+
+
+
         Connection conn = null;
+        HikariDataSource dataSource;
 
 
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-          conn = DriverManager.getConnection(databaseUrl, dbusername, dbpassword);
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO UserDetails(email, phone_number, password) values(?,?,?) ");
+            dataSource = new HikariDataSource();
+            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/users");
+            dataSource.setUsername("root");
+            dataSource.setPassword("");
+            dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+
+             conn = dataSource.getConnection();
+
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO UserDetails(email, phone_number, password) values(?,?,?) ");
             stmt.setString(1,email);
             stmt.setString(2,phoneNumber);
             stmt.setString(3,password);
+
 
             int rs = stmt.executeUpdate();
 
             if(rs > 0){
               // req.setAttribute("status", "success");
                 status = "Registered successfully";
+                email obj = new email();
+                obj.sendEmail(email);
 
             }else {
               //  req.setAttribute("status", "failed");
@@ -52,7 +67,7 @@ public class Addition extends HttpServlet {
 
             }
 
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch ( SQLException e) {
             if(e.toString().contains("Duplicate entry")){
                 status = "User Exists !!!";
             }else{
